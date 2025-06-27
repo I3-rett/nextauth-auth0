@@ -10,7 +10,7 @@ const handler = NextAuth({
         })
     ],
     callbacks: {
-        async jwt({ token, account, profile }) {
+        async jwt({ token, account }) {
             const namespace = process.env.NEXTAUTH_URL
             if (account?.id_token) {
                 const idTokenPayload = JSON.parse(
