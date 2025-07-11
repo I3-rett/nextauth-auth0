@@ -1,29 +1,66 @@
 import NextAuth from "next-auth"
-import Auth0Provider from "next-auth/providers/auth0"
 
 const handler = NextAuth({
     providers: [
-        Auth0Provider({
-            clientId: process.env.AUTH0_CLIENT_ID as string,
-            clientSecret: process.env.AUTH0_CLIENT_SECRET as string,
-            issuer: process.env.AUTH0_ISSUER
-        })
+        {
+            id: "mandataire",
+            name: "Mandataire",
+            type: "oauth",
+            clientId: process.env.OAUTH_CLIENT_ID,
+            clientSecret: process.env.OAUTH_CLIENT_SECRET,
+            wellKnown: process.env.OAUTH_WELL_KNOWN,
+            authorization: {
+                params: {
+                    scope: "openid profile email supann",
+                },
+            },
+            checks: ["pkce", "state"],
+            idToken: true,
+            client: {
+                token_endpoint_auth_method: "client_secret_post",
+            },
+            profile(profile) {
+                return {
+                    id: profile.sub,
+                    name: profile.name ?? null,
+                    email: profile.email ?? null,
+                    sub: profile.sub,
+                    eduPersonPrincipalName: profile.eduPersonPrincipalName ?? null,
+                    iss: profile.iss ?? null,
+                }
+            },
+        },
     ],
+    debug: true,
     callbacks: {
-        async jwt({ token, account }) {
-            const namespace = process.env.NEXTAUTH_URL
-            if (account?.id_token) {
-                const idTokenPayload = JSON.parse(
-                    Buffer.from(account.id_token.split('.')[1], 'base64').toString()
-                )
-                token.roles = idTokenPayload[`${namespace}/roles`] || []
+        async jwt({ token, account, profile }: {
+            token: any
+            account?: any
+            profile?: any
+        }) {
+            if (account && profile) {
+                token.sub = profile.sub
+                token.name = profile.name ?? null
+                token.email = profile.email ?? null
+                token.iss = profile.iss ?? null
+                token.eduPersonPrincipalName = profile.eduPersonPrincipalName ?? null
             }
-
+            // Call the back end to get user roles to persist in the token
+            // TODO
             return token
         },
-        async session({ session, token }) {
-            const roles = (token.roles || []) as string[]
-            session.user.roles = roles
+        async session({ session, token }: {
+            session: any
+            token: any
+        }) {
+            session.user.sub = token.sub
+            session.user.name = token.name
+            session.user.email = token.email
+            session.user.iss = token.iss
+            session.user.eduPersonPrincipalName = token.eduPersonPrincipalName
+            session.user.roles = (token.roles || []) as string[]
+            // Call the back end to get user roles to persist in the token
+            // TODO
             return session
         }
     }

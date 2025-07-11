@@ -20,6 +20,9 @@ export default function Protected() {
                 {session && session.user ? (
                     <div className="flex flex-col items-center gap-4">
                         <p className="text-lg">Welcome, {session.user.name}!</p>
+                        <pre className="bg-gray-100 text-sm p-4 rounded w-full max-w-xl overflow-x-auto text-left whitespace-pre-wrap">
+                            {JSON.stringify(session.user, null, 2)}
+                        </pre>
                         <div className="flex items-center gap-2">
                             <button
                                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-600"
@@ -27,34 +30,14 @@ export default function Protected() {
                             >
                                 Sign out
                             </button>
-                            {session.user.roles && session.user.roles.includes("admin") && (
-                                <Link
-                                    href="/protected/admin"
-                                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-600"
-                                >
-                                    Admin Area
-                                </Link>
-                            )}
                         </div>
-                        {session.user.roles && session.user.roles.length > 0 ? (
-                            <div className="mt-4">
-                                <h3 className="text-lg font-semibold">Roles:</h3>
-                                <ul className="list-disc list-inside">
-                                    {session.user.roles.map((role, index) => (
-                                        <li key={index}>{role}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-gray-500">No roles assigned.</p>
-                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-4">
                         <p className="text-lg">You are not signed in.</p>
                         <button
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={() => signIn("auth0")}
+                            onClick={() => signIn("mandataire", { callbackUrl: "/protected", redirect: true })}
                         >
                             Sign in
                         </button>
